@@ -1,12 +1,12 @@
 #define HEIGHT 600
 #define WIDTH 600
+#define DELAY_TIME 150
 #include <iostream>
 #include <ctime>
 #include "graphics.h"
 
 using namespace std;
 
-const int DELAY_TIME = 200;
 bool combined = false;
 bool game_over = false;
 bool win = false;
@@ -17,6 +17,7 @@ void create_field();
 void draw_field();
 void draw_numbers();
 void new_number();
+bool can_move(int);
 void move(int);
 void combine(int);
 
@@ -120,6 +121,11 @@ void new_number()
    }
    playing_field[i][j] = 2;
    free_fields--;
+}
+
+bool can_move()
+{
+   
 }
 
 void move(int key)
