@@ -41,7 +41,6 @@ int main()
       draw_numbers();
       getch();
       key = getch();
-      cout << "key: " << key << endl;
       switch(key)
       {
          case KEY_UP:
