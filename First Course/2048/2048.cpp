@@ -17,14 +17,8 @@ void create_field();
 void draw_field();
 void draw_numbers();
 void new_number();
-void up_move();
-void down_move();
-void left_move();
-void right_move();
-void up_combine();
-void down_combine();
-void left_combine();
-void right_combine();
+void move(int);
+void combine(int);
 
 int main()
 {
@@ -41,28 +35,8 @@ int main()
       draw_numbers();
       getch();
       key = getch();
-      switch(key)
-      {
-         case KEY_UP:
-            up_move();
-            up_combine();
-            break;
-         case KEY_DOWN:
-            down_move();
-            down_combine();
-            break;
-         case KEY_LEFT:
-            left_move();
-            left_combine();
-            break;
-         case KEY_RIGHT:
-            right_move();
-            right_combine();
-            break;
-         default:
-            getch();
-            continue;
-      }
+      move(key);
+      combine(key);
       
       if(free_fields >= 1)
          new_number();
@@ -137,39 +111,106 @@ void new_number()
 {
    int i, j;
    
-   for(int k = 0; k < field_size / 4; k++)
+   i = rand() % field_size;
+   j = rand() % field_size;
+   while(playing_field[i][j] != 0)
    {
       i = rand() % field_size;
       j = rand() % field_size;
-      while(playing_field[i][j] != 0)
-      {
-         i = rand() % field_size;
-         j = rand() % field_size;
-      }
-      playing_field[i][j] = 2;
-      free_fields--;
    }
+   playing_field[i][j] = 2;
+   free_fields--;
 }
 
-void up_move()
+void move(int key)
 {
-   for(int i = 0; i < field_size; i++)
+   if(key == KEY_UP)
    {
-      for(int j = 0; j < field_size; j++)
+      for(int i = 0; i < field_size; i++)
       {
-         if(playing_field[j][i] == 0)
+         for(int j = 0; j < field_size; j++)
          {
-            for(int k = j + 1; k < field_size; k++)
+            if(playing_field[j][i] == 0)
             {
-               if(playing_field[k][i] != 0)
+               for(int k = j + 1; k < field_size; k++)
                {
-                  playing_field[j][i] = playing_field[k][i];
-                  playing_field[k][i] = 0;
-                  break;
+                  if(playing_field[k][i] != 0)
+                  {
+                     playing_field[j][i] = playing_field[k][i];
+                     playing_field[k][i] = 0;
+                     break;
+                  }
                }
             }
          }
       }
+   }
+   else if(key == KEY_DOWN)
+   {
+      for(int i = 0; i < field_size; i++)
+      {
+         for(int j = field_size - 1; j >= 0; j--)
+         {
+            if(playing_field[j][i] == 0)
+            {
+               for(int k = j - 1; k >= 0; k--)
+               {
+                  if(playing_field[k][i] != 0)
+                  {
+                     playing_field[j][i] = playing_field[k][i];
+                     playing_field[k][i] = 0;
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+   else if(key == KEY_LEFT)
+   {
+      for(int i = 0; i < field_size; i++)
+      {
+         for(int j = 0; j < field_size; j++)
+         {
+            if(playing_field[i][j] == 0)
+            {
+               for(int k = j + 1; k < field_size; k++)
+               {
+                  if(playing_field[i][k] != 0)
+                  {
+                     playing_field[i][j] = playing_field[i][k];
+                     playing_field[i][k] = 0;
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+   else if(key == KEY_RIGHT)
+   {
+      for(int i = 0; i < field_size; i++)
+      {
+         for(int j = field_size - 1; j >= 0; j--)
+         {
+            if(playing_field[i][j] == 0)
+            {
+               for(int k = j - 1; k >= 0; k--)
+               {
+                  if(playing_field[i][k] != 0)
+                  {
+                     playing_field[i][j] = playing_field[i][k];
+                     playing_field[i][k] = 0;
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+   else
+   {
+      return;
    }
    
    draw_field();
@@ -177,168 +218,80 @@ void up_move()
    delay(DELAY_TIME);
 }
 
-void down_move()
+void combine(int key)
 {
-   for(int i = 0; i < field_size; i++)
+   if(key == KEY_UP)
    {
-      for(int j = field_size - 1; j >= 0; j--)
+      for(int i = 0; i < field_size; i++)
       {
-         if(playing_field[j][i] == 0)
+         for(int j = 0; j < field_size - 1; j++)
          {
-            for(int k = j - 1; k >= 0; k--)
+            if(playing_field[j + 1][i] == playing_field[j][i] && playing_field[j][i] > 0)
             {
-               if(playing_field[k][i] != 0)
-               {
-                  playing_field[j][i] = playing_field[k][i];
-                  playing_field[k][i] = 0;
-                  break;
-               }
+               playing_field[j][i] *= 2;
+               playing_field[j + 1][i] = 0;
+               free_fields++;
+               combined = true;
             }
          }
       }
    }
-   
-   draw_field();
-   draw_numbers();
-   delay(DELAY_TIME);
-}
-
-void left_move()
-{
-   for(int i = 0; i < field_size; i++)
+   else if(key == KEY_DOWN)
    {
-      for(int j = 0; j < field_size; j++)
+      for(int i = 0; i < field_size; i++)
       {
-         if(playing_field[i][j] == 0)
+         for(int j = field_size - 1; j > 0; j--)
          {
-            for(int k = j + 1; k < field_size; k++)
+            if(playing_field[j - 1][i] == playing_field[j][i] && playing_field[j][i] > 0)
             {
-               if(playing_field[i][k] != 0)
-               {
-                  playing_field[i][j] = playing_field[i][k];
-                  playing_field[i][k] = 0;
-                  break;
-               }
+               playing_field[j][i] *= 2;
+               playing_field[j - 1][i] = 0;
+               free_fields++;
+               combined = true;
             }
          }
       }
    }
-   
-   draw_field();
-   draw_numbers();
-   delay(DELAY_TIME);
-}
-
-void right_move()
-{
-   for(int i = 0; i < field_size; i++)
+   else if(key == KEY_LEFT)
    {
-      for(int j = field_size - 1; j >= 0; j--)
+      for(int i = 0; i < field_size; i++)
       {
-         if(playing_field[i][j] == 0)
+         for(int j = 0; j < field_size - 1; j++)
          {
-            for(int k = j - 1; k >= 0; k--)
+            if(playing_field[i][j + 1] == playing_field[i][j] && playing_field[i][j] > 0)
             {
-               if(playing_field[i][k] != 0)
-               {
-                  playing_field[i][j] = playing_field[i][k];
-                  playing_field[i][k] = 0;
-                  break;
-               }
+               playing_field[i][j] *= 2;
+               playing_field[i][j + 1] = 0;
+               free_fields++;
+               combined = true;
             }
          }
       }
    }
+   else if(key == KEY_RIGHT)
+   {
+      for(int i = 0; i < field_size; i++)
+      {
+         for(int j = field_size - 1; j > 0; j--)
+         {
+            if(playing_field[i][j - 1] == playing_field[i][j] && playing_field[i][j] > 0)
+            {
+               playing_field[i][j] *= 2;
+               playing_field[i][j - 1] = 0;
+               free_fields++;
+               combined = true;
+            }
+         }
+      }
+   }
+   else
+   {
+      return;
+   }
    
-   draw_field();
-   draw_numbers();
-   delay(DELAY_TIME);
-}
-
-void up_combine()
-{
-   for(int i = 0; i < field_size; i++)
-   {
-      for(int j = 0; j < field_size - 1; j++)
-      {
-         if(playing_field[j + 1][i] == playing_field[j][i] && playing_field[j][i] > 0)
-         {
-            playing_field[j][i] *= 2;
-            playing_field[j + 1][i] = 0;
-            free_fields++;
-            combined = true;
-         }
-      }
-   }
-   if(combined == true)
-   {
-      combined = false;
-      up_move();
-   }
-}
-
-void down_combine()
-{
-   for(int i = 0; i < field_size; i++)
-   {
-      for(int j = field_size - 1; j > 0; j--)
-      {
-         if(playing_field[j - 1][i] == playing_field[j][i] && playing_field[j][i] > 0)
-         {
-            playing_field[j][i] *= 2;
-            playing_field[j - 1][i] = 0;
-            free_fields++;
-            combined = true;
-         }
-      }
-   }
-   if(combined == true)
-   {
-      combined = false;
-      down_move();
-   }
-}
-
-void left_combine()
-{
-   for(int i = 0; i < field_size; i++)
-   {
-      for(int j = 0; j < field_size - 1; j++)
-      {
-         if(playing_field[i][j + 1] == playing_field[i][j] && playing_field[i][j] > 0)
-         {
-            playing_field[i][j] *= 2;
-            playing_field[i][j + 1] = 0;
-            free_fields++;
-            combined = true;
-         }
-      }
-   }
-   if(combined == true)
-   {
-      combined = false;
-      left_move();
-   }
-}
-
-void right_combine()
-{
-   for(int i = 0; i < field_size; i++)
-   {
-      for(int j = field_size - 1; j > 0; j--)
-      {
-         if(playing_field[i][j - 1] == playing_field[i][j] && playing_field[i][j] > 0)
-         {
-            playing_field[i][j] *= 2;
-            playing_field[i][j - 1] = 0;
-            free_fields++;
-            combined = true;
-         }
-      }
-   }
    if(combined = true)
    {
       combined = false;
-      right_move();
+      move(key);
    }
 }
