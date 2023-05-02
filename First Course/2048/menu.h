@@ -2,9 +2,11 @@
 #define MENU_H
 #include "graphics.h"
 
-enum button_values { NONE = -1, GAME, SETTINGS, ABOUT, EXIT, N_BUTTONS, 
-                              FOUR, FIVE, SIX, SEVEN, S_BUTTONS, 
-                              MENU, LAST_STEP, G_BUTTONS };
+const int WIDTH = 1280, HEIGHT = 800;
+
+enum button_values { NONE = -1, GAME, SETTINGS, 
+                     ABOUT, EXIT, N_BUTTONS, FOUR, 
+                     FIVE, SIX, SEVEN, S_BUTTONS };
 
 struct Button
 {

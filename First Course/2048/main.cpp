@@ -1,5 +1,3 @@
-#define WIDTH 1280
-#define HEIGHT 800
 #include "menu.h"
 #include "graphics.h"
 

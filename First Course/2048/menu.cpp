@@ -1,15 +1,13 @@
-#define WIDTH 1280
-#define HEIGHT 800
 #include "menu.h"
 #include "game.h"
 #include "graphics.h"
 
-using namespace std;
-
 Button buttons[S_BUTTONS];
-IMAGE *start_image, *background_image, *menu_image, *settings_image, *about_image;
+IMAGE *start_image, *background_image;
+IMAGE *menu_image, *settings_image, *about_image;
 IMAGE *four, *five, *six, *seven;
 int field_size = 4;
+int n_level;
 
 void load()
 {
@@ -43,7 +41,8 @@ void menu()
       putimage(0, 0, menu_image, COPY_PUT);
       for (int i = 0; i < N_BUTTONS; i++)
       {
-         putimage(buttons[i].left, buttons[i].top, buttons[i].image, TRANSPARENT_PUT);
+         putimage(buttons[i].left, buttons[i].top,
+                        buttons[i].image, TRANSPARENT_PUT);
       }
       swapbuffers();
       int state = NONE;
@@ -55,12 +54,18 @@ void menu()
             putimage(0, 0, menu_image, COPY_PUT);
             for (int i = 0; i < N_BUTTONS; i++)
             {
-               putimage(buttons[i].left, buttons[i].top, buttons[i].image, TRANSPARENT_PUT);
-               if (mousex() > buttons[i].left && mousex() < buttons[i].left + buttons[i].width &&
-                  mousey() > buttons[i].top && mousey() < buttons[i].top + buttons[i].height)
+               putimage(buttons[i].left, buttons[i].top, 
+                  buttons[i].image, TRANSPARENT_PUT);
+               if (mousex() > buttons[i].left && 
+                  mousex() < buttons[i].left + buttons[i].width &&
+                  mousey() > buttons[i].top && 
+                  mousey() < buttons[i].top + buttons[i].height)
                {
                   setfillstyle(SOLID_FILL, WHITE);
-                  bar (buttons[i].left + 0.1 * buttons[i].width, buttons[i].top + 0.96 * buttons[i].height, buttons[i].left + 0.9 * buttons[i].width, buttons[i].top + buttons[i].height);
+                  bar (buttons[i].left + 0.1 * buttons[i].width, 
+                        buttons[i].top + 0.96 * buttons[i].height, 
+                        buttons[i].left + 0.9 * buttons[i].width, 
+                        buttons[i].top + buttons[i].height);
                }
             }
             swapbuffers();
@@ -68,6 +73,7 @@ void menu()
             state = select_button();
          }
       }
+      
       
       switch (state)
       {
@@ -78,14 +84,13 @@ void menu()
       }
    }
 }
-
-
 void settings()
 {
    putimage(0, 0, settings_image, COPY_PUT);
    for (int i = N_BUTTONS + 1; i < S_BUTTONS; i++)
    {
-      putimage(buttons[i].left, buttons[i].top, buttons[i].image, COPY_PUT);
+      putimage(buttons[i].left, buttons[i].top, 
+                  buttons[i].image, COPY_PUT);
    }
    swapbuffers();
    
@@ -104,6 +109,7 @@ void about()
 {
    putimage(0, 0, about_image, COPY_PUT);
    swapbuffers();
+   getch();
    getch();
 }
 
