@@ -1,4 +1,5 @@
 #define DELAY_TIME 100
+#define FONT_TEXT 3
 #include <ctime>
 #include <fstream>
 #include "game.h"
@@ -14,16 +15,21 @@ Num **nums;
 
 int x_offset = 340, y_offset = 150;
 
-int **play_field;
+int field_width = 600;
+
+long long **play_field;
+bool win;
+bool last_win;
 int free_fields;
-int field_width = 10;
+int field_wall_width = 10;
 int score, record;
+int speed = field_size * 5;
 
 int **move_pos;
 int n_nums = 0;
 int x_speed, y_speed;
 
-int **last_field;
+long long **last_field;
 int last_score, last_free_fields;
 
 void game()
@@ -51,7 +57,8 @@ void play()
       key = getch();
       if (key == 0)
          continue;
-      else if (key == KEY_ESC)
+      
+      if (key == KEY_ESC)
          break;
       else if (key == KEY_BACKSPACE)
       {
@@ -65,17 +72,28 @@ void play()
          save_field();
          move(key);
          do_animation();
-         combine(key);
-         do_animation();
       }
       else
          continue;
-         
+      
       if (free_fields > 0)
          new_number();
       
-      if (check_over() == true && 
-         free_fields == 0)
+      if (check_win() == true)
+      {
+         draw_field();
+         draw_numbers();
+         
+         win = true;
+         draw_win();
+         int choice = getch();
+         if (choice == KEY_BACKSPACE)
+            back_step();
+         else if (choice == KEY_ESC)
+            break;
+      }
+      
+      if (check_over() == true)
       {
          draw_field();
          draw_numbers();
@@ -98,37 +116,43 @@ void play()
 
 void create_field()
 {
+   while (field_width % field_size != 0)
+      field_width++;
+   
    free_fields = field_size * field_size;
    score = 0;
    last_score = 0;
    
+   win = false;
+   last_win = false;
+   
    nums = new Num*[field_size];
-   play_field = new int*[field_size];
+   play_field = new long long*[field_size];
    
    move_pos = new int*[field_size * field_size];
-   last_field = new int*[field_size];
+   last_field = new long long*[field_size];
    
    for (int i = 0; i < field_size; i++)
    {
       nums[i] = new Num[field_size];
-      last_field[i] = new int[field_size];
-      play_field[i] = new int[field_size];
+      last_field[i] = new long long[field_size];
+      play_field[i] = new long long[field_size];
       
-      int offset = 600 / field_size / 2 + (field_width / 2);
+      int offset = field_width / field_size / 2 + (field_wall_width / 2);
       for (int j = 0; j < field_size; j++)
       {
-         nums[i][j] = 
-         {0, x_offset + j * (600 / field_size) + offset,
-            y_offset + i * (600 / field_size) + offset, 
-            600 / field_size / 2, 0, 
-            x_offset + j * (600 / field_size) + offset, 
-            y_offset + i * (600 / field_size) + offset};
-         
-         last_field[i][j] = 0;
          play_field[i][j] = 0;
+         last_field[i][j] = play_field[i][j];
+         nums[i][j] = 
+         {play_field[i][j], 
+            x_offset + j * (field_width / field_size) + offset,
+            y_offset + i * (field_width / field_size) + offset, 
+            field_width / field_size / 2, 0, 0, 0, 
+            x_offset + j * (field_width / field_size) + offset, 
+            y_offset + i * (field_width / field_size) + offset};
       }
    }
-   
+
    for (int i = 0; i < field_size * field_size; i++)
    {
       move_pos[i] = new int[2];
@@ -209,45 +233,55 @@ void draw_field()
    string score_txt = "Score: " + to_string(score);
    string record_txt = "Record: " + to_string(record);
    
-   setusercharsize(2, 3, 3, 3);
-   settextstyle(GOTHIC_FONT, HORIZ_DIR, USER_CHAR_SIZE);
-   setbkcolor(COLOR(70, 70, 70));
+   setusercharsize(6, 5, 4, 3);
+   settextstyle(FONT_TEXT, HORIZ_DIR, USER_CHAR_SIZE);
+   setbkcolor(imagegetpixel(background_image, 0, 0));
+   setcolor(WHITE);
+   
+   int score_y = 80;
+   int record_y = 120;
    
    settextjustify(LEFT_TEXT, BOTTOM_TEXT);
-   outtextxy(x_offset, 80, score_txt.c_str());
-   outtextxy(x_offset, 120, record_txt.c_str());
+   outtextxy(x_offset, score_y, score_txt.c_str());
+   outtextxy(x_offset, record_y, record_txt.c_str());
    
    setfillstyle(SOLID_FILL, COLOR(100, 100, 100));
+   bar (x_offset, y_offset,
+      x_offset + field_width + field_wall_width,
+      y_offset + field_width + field_wall_width);
+      
+   setfillstyle(SOLID_FILL, COLOR(70, 70, 70));
+   setcolor(WHITE);
    
+   int field_down = 750;
    for (int i = 0; i <= field_size; i++) 
    {
-      bar(x_offset + i * 600 / field_size, y_offset,
-         x_offset + i * 600 / field_size + field_width, 
-         750 + field_width);
-      bar(x_offset, y_offset + i * 600 / field_size, 
-         WIDTH - x_offset + field_width,
-         y_offset + i * 600 / field_size + field_width);
+      bar(x_offset + i * field_width / field_size, y_offset,
+         x_offset + i * field_width / field_size + field_wall_width, 
+         field_down + field_wall_width);
+      bar(x_offset, y_offset + i * field_width / field_size, 
+         WIDTH - x_offset + field_wall_width,
+         y_offset + i * field_width / field_size + field_wall_width);
    }
 }
 
 void draw_numbers()
 {
-   int coefficient = field_size * field_size;
    settextjustify(CENTER_TEXT, BOTTOM_TEXT);
    for (int i = 0; i < field_size; i++)
       for (int j = 0; j < field_size; j++)
          if (nums[i][j].data > 0)
          {
             string text = to_string(nums[i][j].data);
+            int num_background_color = 
+               COLOR(nums[i][j].red, nums[i][j].green, nums[i][j].blue);
+            setbkcolor(num_background_color);
+            setfillstyle(SOLID_FILL, num_background_color);
+            int coefficient = (text.length() + 1) * field_size;
+            setusercharsize(31, coefficient + 2, 31, coefficient);
+            settextstyle(FONT_TEXT, HORIZ_DIR, USER_CHAR_SIZE);
             
-            setbkcolor(COLOR(nums[i][j].red, 0, 0));
-            setfillstyle(SOLID_FILL, COLOR(nums[i][j].red, 0, 0));
-            setusercharsize(600 - text.length() * 5, 
-            600 + field_size * coefficient * text.length() / 2, 800, 
-            600 + coefficient * text.length());
-            settextstyle(GOTHIC_FONT, HORIZ_DIR, USER_CHAR_SIZE);
-            
-            int offset = nums[i][j].size - field_width / 2;
+            int offset = nums[i][j].size - field_wall_width / 2;
             bar (nums[i][j].pos_x - offset, 
                   nums[i][j].pos_y - offset, 
                   nums[i][j].pos_x + offset, 
@@ -289,6 +323,7 @@ void back_step()
       for (int j = 0; j < field_size; j++)
          play_field[i][j] = last_field[i][j];
    
+   win = last_win;
    score = last_score;
    free_fields = last_free_fields;
    refresh_field();
@@ -359,162 +394,119 @@ bool can_combine(int key)
    return false;
 }
 
-void move(int key) 
+void move(int key)
 {
-   x_speed = 0, y_speed = 0;
    int j_start, end, step;
+   x_speed = 0, y_speed = 0;
    switch (key)
    {
       case KEY_UP:
          j_start = 0; 
          step = 1;
          end = field_size;
-         y_speed = -15;
+         y_speed = -speed;
          break;
       case KEY_DOWN:
          j_start = field_size - 1;
          step = -1;
          end = -1;
-         y_speed = 15;
+         y_speed = speed;
          break;
       case KEY_LEFT:
          j_start = 0;
          step = 1;
          end = field_size;
-         x_speed = -15;
+         x_speed = -speed;
          break;
       case KEY_RIGHT:
          j_start = field_size - 1;
          step = -1;
          end = -1;
-         x_speed = 15;
+         x_speed = speed;
          break;
    }
-
    if (key == KEY_RIGHT || key == KEY_LEFT)
    {
       for (int i = 0; i < field_size; i++)
          for (int j = j_start; j != end; j += step)
-            if (play_field[i][j] == 0)
-               for (int k = j + step; k != end; k += step)
-                  if (play_field[i][k] != 0)
-                  {
-                     if (nums[i][k].pos_x == nums[i][k].next_x)
-                     {
-                        move_pos[n_nums][0] = i;
-                        move_pos[n_nums][1] = k;
-                        n_nums++;
-                     }
-                     nums[i][k].next_x = nums[i][j].pos_x;
-                     play_field[i][j] = play_field[i][k];
-                     play_field[i][k] = 0;
-                     break;
-                  }
-   }
-   else if (key == KEY_UP || key == KEY_DOWN)
-   {
-      for (int i = 0; i < field_size; i++)
-         for (int j = j_start; j != end; j += step)
-            if (play_field[j][i] == 0)
-               for (int k = j + step; k != end; k += step)
-                  if (play_field[k][i] != 0)
-                  {
-                     if (nums[i][k].pos_x == nums[i][k].next_x)
-                     {
-                        move_pos[n_nums][0] = k;
-                        move_pos[n_nums][1] = i;
-                        n_nums++;
-                     }
-                     nums[k][i].next_y = nums[j][i].pos_y;
-                     play_field[j][i] = play_field[k][i];
-                     play_field[k][i] = 0;
-                     break;
-                  }
-   }
-}
-
-void combine(int key)
-{
-   bool combined = false;
-   int j_start, end, step;
-   
-   switch (key)
-   {
-      case KEY_UP:
-         j_start = 0;
-         step = 1;
-         end = field_size - 1;
-         break;
-      case KEY_DOWN:
-         j_start = field_size - 1;
-         step = -1;
-         end = 0;
-         break;
-      case KEY_LEFT:
-         j_start = 0;
-         step = 1;
-         end = field_size - 1;
-         break;
-      case KEY_RIGHT:
-         j_start = field_size - 1;
-         step = -1;
-         end = 0;
-         break;
-   }
-   
-   if (key == KEY_RIGHT || key == KEY_LEFT)
-   {
-      for (int i = 0; i < field_size; i++)
-         for (int j = j_start; j != end; j += step)
-            if (play_field[i][j] != 0 && 
-               play_field[i][j] == play_field[i][j + step])
+            for (int k = j + step; k != end; k += step)
             {
-               play_field[i][j] *= 2;
-               score += play_field[i][j];
-               play_field[i][j + step] = 0;
-               
-               if (nums[i][j + step].pos_x == 
-                  nums[i][j + step].next_x)
+               if (play_field[i][j] == 0 && play_field[i][k] != 0)
                {
-                  move_pos[n_nums][0] = i;
-                  move_pos[n_nums][1] = j + step;
-                  n_nums++;
+                  if (nums[i][k].pos_x == nums[i][k].next_x)
+                  {
+                     move_pos[n_nums][0] = i;
+                     move_pos[n_nums][1] = k;
+                     n_nums++;
+                  }
+                  nums[i][k].next_x = nums[i][j].pos_x;
+                  play_field[i][j] = play_field[i][k];
+                  play_field[i][k] = 0;
                }
-               
-               nums[i][j + step].next_x = nums[i][j].next_x;
-               free_fields++;
-               combined = true;
+               else if (play_field[i][j] != 0 && 
+                        play_field[i][j] == play_field[i][k])
+               {
+                  if (nums[i][k].pos_x == nums[i][k].next_x)
+                  {
+                     move_pos[n_nums][0] = i;
+                     move_pos[n_nums][1] = k;
+                     n_nums++;
+                  }
+                  nums[i][k].next_x = nums[i][j].next_x;
+                  play_field[i][j] *= 2;
+                  play_field[i][k] = 0;
+                  free_fields++;
+                  score += play_field[i][j];
+                  break;
+               }
+               else if (play_field[i][j] != 0 && 
+                        play_field[i][j] != play_field[i][k] && 
+                        play_field[i][k] != 0)
+                  break;
             }
    }
    else if (key == KEY_UP || key == KEY_DOWN)
    {
       for (int i = 0; i < field_size; i++)
          for (int j = j_start; j != end; j += step)
-            if (play_field[j][i] != 0 &&
-            play_field[j][i] == play_field[j + step][i])
+            for (int k = j + step; k != end; k += step)
             {
-               play_field[j][i] *= 2;
-               score += play_field[j][i];
-               play_field[j + step][i] = 0;
-               
-               if (nums[j + step][i].pos_x == 
-                  nums[j + step][i].next_x)
+               if (play_field[j][i] == 0 && play_field[k][i] != 0)
                {
-                  move_pos[n_nums][0] = j + step;
-                  move_pos[n_nums][1] = i;
-                  n_nums++;
+                  if (nums[k][i].pos_y == nums[k][i].next_y)
+                  {
+                     move_pos[n_nums][0] = k;
+                     move_pos[n_nums][1] = i;
+                     n_nums++;
+                  }
+                  nums[k][i].next_y = nums[j][i].pos_y;
+                  play_field[j][i] = play_field[k][i];
+                  play_field[k][i] = 0;
                }
-               nums[j + step][i].next_y = nums[j][i].next_y;
-               free_fields++;
-               combined = true;
+               else if (play_field[j][i] != 0 && 
+                        play_field[j][i] == play_field[k][i])
+               {
+                  if (nums[k][i].pos_y == nums[k][i].next_y)
+                  {
+                     move_pos[n_nums][0] = k;
+                     move_pos[n_nums][1] = i;
+                     n_nums++;
+                  }
+                  nums[k][i].next_y = nums[j][i].pos_y;
+                  play_field[j][i] *= 2;
+                  play_field[k][i] = 0;
+                  free_fields++;
+                  score += play_field[j][i];
+                  break;
+               }
+               else if (play_field[j][i] != 0 && 
+                        play_field[j][i] != play_field[k][i] && 
+                        play_field[k][i] != 0)
+                  break;
             }
    }
-   
    if (score > record)
       record = score;
-   
-   if (combined == true)
-      move(key);
 }
 
 void do_animation()
@@ -525,10 +517,17 @@ void do_animation()
       moved = false;
       for (int i = 0; i < n_nums; i++)
       {
-         if (nums[move_pos[i][0]][move_pos[i][1]].next_x !=
+         if (((x_speed >= 0 && y_speed >= 0) &&
+            (nums[move_pos[i][0]][move_pos[i][1]].next_x >
             nums[move_pos[i][0]][move_pos[i][1]].pos_x ||
-            nums[move_pos[i][0]][move_pos[i][1]].next_y !=
-            nums[move_pos[i][0]][move_pos[i][1]].pos_y)
+            nums[move_pos[i][0]][move_pos[i][1]].next_y >
+            nums[move_pos[i][0]][move_pos[i][1]].pos_y)) 
+            ||
+            ((x_speed <= 0 && y_speed <= 0) &&
+            (nums[move_pos[i][0]][move_pos[i][1]].next_x <
+            nums[move_pos[i][0]][move_pos[i][1]].pos_x ||
+            nums[move_pos[i][0]][move_pos[i][1]].next_y <
+            nums[move_pos[i][0]][move_pos[i][1]].pos_y)))
          {
             nums[move_pos[i][0]][move_pos[i][1]].pos_x += x_speed;
             nums[move_pos[i][0]][move_pos[i][1]].pos_y += y_speed;
@@ -551,22 +550,43 @@ void refresh_field()
       for (int j = 0; j < field_size; j++)
       {
          nums[i][j].data = play_field[i][j];
-         nums[i][j].red = find_num(play_field[i][j]) * 20;
-         nums[i][j].pos_x = x_offset + j * (600 / field_size) + 
-                           nums[i][j].size + (field_width / 2);
+         
+         nums[i][j].pos_x = x_offset + j * (field_width / field_size) + 
+                                    nums[i][j].size + field_wall_width / 2;
+         nums[i][j].pos_y = y_offset + i * (field_width / field_size) + 
+                                    nums[i][j].size + field_wall_width / 2;
+         
          nums[i][j].next_x = nums[i][j].pos_x;
-         nums[i][j].pos_y = y_offset + i * (600 / field_size) + 
-                           nums[i][j].size + (field_width / 2);
          nums[i][j].next_y = nums[i][j].pos_y;
+         
+         nums[i][j].red = 255 - (find_num(play_field[i][j]) * 15 + 50) % 255;
+         nums[i][j].green = 255 - (find_num(play_field[i][j]) * 10 + 50) % 255;
+         nums[i][j].blue = 255 - (find_num(play_field[i][j]) * 0 + 0) % 255;
       }
+}
+
+bool check_win()
+{
+   if (win == true)
+      return false;
+   
+   for (int i = 0; i < field_size; i++)
+      for (int j = 0; j < field_size; j++)
+         if (play_field[i][j] == 2048)
+            return true;
+   return false;
 }
 
 bool check_over()
 {
+   if (free_fields > 0)
+      return false;
+   
    for (int i = 0; i < field_size; i++)
       for (int j = 0; j < field_size - 1; j++)
          if (play_field[i][j] == play_field[i][j + 1])
             return false;
+
    for (int i = 0; i < field_size - 1; i++)
       for (int j = 0; j < field_size; j++)
          if (play_field[i][j] == play_field[i + 1][j])
@@ -575,18 +595,28 @@ bool check_over()
    return true;
 }
 
+void draw_win()
+{
+   string win_text = "Поздравляем!\nВы Победили!";
+   settextjustify(CENTER_TEXT, BOTTOM_TEXT);
+   setusercharsize(6, 5, 4, 3);
+   outtextxy(WIDTH / 2, HEIGHT / 2 + 0.5 * textheight(win_text.c_str()), win_text.c_str());
+   swapbuffers();
+}
+
 void game_over()
 {
-   string over = "Game Over!";
-   string s = "Нажмите ESC чтобы вернуться в главное меню...";
+   string over_text = "Игра окончена!";
+   string wait_text = "Нажмите ESC чтобы вернуться в главное меню...";
    
    setbkcolor(COLOR(70, 70, 70));
    settextjustify(CENTER_TEXT, BOTTOM_TEXT);
-   setusercharsize(1, 1, 3, 2);
+   setusercharsize(6, 5, 4, 3);
+   settextstyle(FONT_TEXT, HORIZ_DIR, USER_CHAR_SIZE);
    
    outtextxy(WIDTH / 2,
-      HEIGHT / 2 + 0.5 * textheight(over.c_str()), over.c_str());
+      HEIGHT / 2 + 0.5 * textheight(over_text.c_str()), over_text.c_str());
    outtextxy(WIDTH / 2,
-      HEIGHT / 2 + textheight(s.c_str()) * 2, s.c_str());
+      HEIGHT / 2 + textheight(wait_text.c_str()) * 2, wait_text.c_str());
    swapbuffers();
 }

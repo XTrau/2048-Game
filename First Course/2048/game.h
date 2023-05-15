@@ -3,11 +3,14 @@
 
 struct Num
 {
-   int data;
+   long long data;
    int pos_x;
    int pos_y;
    int size;
+   
    int red;
+   int green;
+   int blue;
    
    int next_x;
    int next_y;
@@ -33,10 +36,12 @@ void back_step();
 bool can_move(int);
 bool can_combine(int);
 void move(int);
-void combine(int);
 void do_animation();
 
 bool check_over();
+bool check_win();
+
 void game_over();
+void draw_win();
 
 #endif
