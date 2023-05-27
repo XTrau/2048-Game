@@ -18,7 +18,6 @@ struct Button
 };
 
 void load();
-void draw_background();
 void start();
 void menu();
 void settings();
@@ -26,7 +25,6 @@ void about();
 void close();
 
 void create_button(int, int, int, const char*);
-int  select_button();
-int select_setting_button();
+int  select_button(int);
 
 #endif

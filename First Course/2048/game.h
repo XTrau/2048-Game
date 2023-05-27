@@ -1,7 +1,11 @@
 #ifndef GAME_H
 #define GAME_H
+#include "graphics.h"
 
-struct Num
+const int X_OFFSET = 340, Y_OFFSET = 150;
+const int FIELD_WALL_WIDTH = 10;
+
+struct Cell
 {
    long long data;
    int pos_x;
@@ -18,6 +22,7 @@ struct Num
 
 void game();
 void play();
+void load_game();
 void create_field();
 void delete_field();
 
@@ -25,7 +30,6 @@ void open_record();
 void save_record();
 
 void draw_field();
-void refresh_field();
 void draw_numbers();
 void new_number();
 int find_num(int);
@@ -36,12 +40,12 @@ void back_step();
 bool can_move(int);
 bool can_combine(int);
 void move(int);
-void do_animation();
+void do_animation(int, int, int);
+void refresh_field();
 
-bool check_over();
+bool check_lose();
 bool check_win();
 
-void game_over();
-void draw_win();
+void draw_over(IMAGE*);
 
 #endif

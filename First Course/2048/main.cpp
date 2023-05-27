@@ -9,7 +9,6 @@ int main()
    load();
    start();
    menu();
-   
    closegraph();
    return 0;
 }

@@ -2,13 +2,21 @@
 #include "game.h"
 #include "graphics.h"
 
-Button buttons[S_BUTTONS];
-IMAGE *start_image, *background_image;
-IMAGE *menu_image, *settings_image, *about_image;
-IMAGE *four, *five, *six, *seven;
-int field_size = 4;
-int n_level;
+using namespace std;
 
+Button buttons[S_BUTTONS]; // массив кнопок
+
+// Изображения главного меню
+IMAGE *start_image, *background_image, 
+            *menu_image, *settings_image, *about_image;
+            
+// Изображения настроек
+IMAGE *four, *five, *six, *seven;
+
+// Режим игры
+int field_size = 4;
+
+// Загрузка изображений и создание кнопок главного меню
 void load()
 {
    start_image = loadBMP("images/start.bmp");
@@ -17,16 +25,18 @@ void load()
    about_image = loadBMP("images/about.bmp");
    settings_image = loadBMP("images/settings.bmp");
    
-   create_button(GAME,  540, 250, "buttons/game.bmp");
-   create_button(SETTINGS,  515, 350, "buttons/settings.bmp");
-   create_button(ABOUT, 540, 450, "buttons/about.bmp");
-   create_button(EXIT,  540, 550, "buttons/exit.bmp");
-   create_button(FOUR, 320, 250, "buttons/4x4.bmp");
-   create_button(FIVE, 760, 250, "buttons/5x5.bmp");
-   create_button(SIX, 320, 500, "buttons/6x6.bmp");
-   create_button(SEVEN, 760, 500, "buttons/7x7.bmp");
+   create_button(GAME,  540, 250, "buttons/game_button.bmp");
+   create_button(SETTINGS,  515, 350, 
+      "buttons/settings_button.bmp");
+   create_button(ABOUT, 540, 450, "buttons/about_button.bmp");
+   create_button(EXIT,  540, 550, "buttons/exit_button.bmp");
+   create_button(FOUR, 320, 250, "buttons/4x4_button.bmp");
+   create_button(FIVE, 760, 250, "buttons/5x5_button.bmp");
+   create_button(SIX, 320, 500, "buttons/6x6_button.bmp");
+   create_button(SEVEN, 760, 500, "buttons/7x7_button.bmp");
 }
 
+// Вывод начальной заставки игры
 void start()
 {
    putimage(0, 0, start_image, COPY_PUT);
@@ -34,7 +44,7 @@ void start()
    getch();
 }
 
-
+// Запуск главного меню игры
 void menu() 
 {
    while (true)
@@ -64,7 +74,10 @@ void menu()
             }
             swapbuffers();
             
-            state = select_button();
+            if(kbhit())
+               getch();
+            
+            state = select_button(0);
          }
       }
       
@@ -78,6 +91,8 @@ void menu()
       }
    }
 }
+
+// Настройки игры
 void settings()
 {
    int state = NONE;
@@ -104,33 +119,44 @@ void settings()
          }
          swapbuffers();
          
-         state = select_setting_button();
+         if (kbhit())
+         {
+            int key = getch();
+            if (key == KEY_ESC)
+               return;
+         }
+         
+         state = select_button(1);
       }
    }
    field_size = state - N_BUTTONS + 3;
 }
 
+// Отображение информации об игре
 void about()
 {
    putimage(0, 0, about_image, COPY_PUT);
    swapbuffers();
    getch();
-   getch();
 }
 
+// Закрытие игры, очистка памяти
 void close()
 {
+   for (int i = 0; i < N_BUTTONS; i++)
+      freeimage(buttons[i].image);
+   
+   for (int i = N_BUTTONS + 1; i < S_BUTTONS; i++)
+      freeimage(buttons[i].image);
+   
    freeimage(start_image);
    freeimage(background_image);
    freeimage(menu_image);
    freeimage(settings_image);
    freeimage(about_image);
-   for (int i = 0; i < N_BUTTONS; i++)
-   {
-      freeimage(buttons[i].image);
-   }
 }
 
+// Функция создание кнопки в массиве Buttons
 void create_button(int i, int left, int top, const char *file_name)
 {
    buttons[i].image = loadBMP(file_name);
@@ -140,35 +166,27 @@ void create_button(int i, int left, int top, const char *file_name)
    buttons[i].height = imageheight(buttons[i].image);
 }
 
-int select_button()
+// Выбор кнопки главного меню
+int select_button(int choice)
 {
-   int x, y;
-   
-   x = mousex();
-   y = mousey();
-   
-   for (int i = 0; i < N_BUTTONS; i++)
+   int start, end;
+   if (choice == 0)
    {
-      if (x > buttons[i].left &&
-          x < buttons[i].left + buttons[i].width &&
-          y > buttons[i].top &&
-          y < buttons[i].top + buttons[i].height)
-      {
-         return i;
-      }
+      start = 0;
+      end = N_BUTTONS;
+   }
+   else if (choice == 1)
+   {
+      start = N_BUTTONS + 1;
+      end = S_BUTTONS;
    }
    
-   return NONE;
-}
-
-int select_setting_button()
-{
    int x, y;
    
    x = mousex();
    y = mousey();
    
-   for (int i = N_BUTTONS + 1; i < S_BUTTONS; i++)
+   for (int i = start; i != end; i++)
    {
       if (x > buttons[i].left &&
           x < buttons[i].left + buttons[i].width &&
