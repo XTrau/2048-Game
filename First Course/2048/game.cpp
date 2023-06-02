@@ -7,36 +7,27 @@
 
 using namespace std;
 
-extern int field_size; // Режим игры
-extern IMAGE *background_image; // Фон игры
+extern int field_size; 
+extern IMAGE *background_image; 
 
 IMAGE *win_image, *lose_image;
 
-// Массив структуры клеток цифр
 Cell **Cells;
-
-// Массив индексов клеток которые двигаются
 int **move_pos;
 
 
-int speed; // Скорость цифр
-int field_width; // Ширина игрового поля.
+int speed;
+int field_width;
 
-// Переменные состояния игры
 long long **play_field;
 int free_fields;
 bool win; 
 int score, record;
 
-// Переменные предыдущего хода
 long long **last_field;
 int last_score, last_free_fields;
 bool last_win;
 
-/* 
-Функция в которой выполняются все игровые функции
-загрузка данных, игра и очистка памяти
-*/
 void game()
 {
    cleardevice();
@@ -49,10 +40,8 @@ void game()
    delete_field();
 }
 
-// Загрузка начальных данных состояния игры
 void load_game()
 {
-   // Установка ширины игрвого поля
    field_width = 600;
    while (field_width % field_size != 0)
       field_width++;
@@ -66,19 +55,17 @@ void load_game()
    win = false;
    last_win = false;
    
-   // Загрузка изображений
    win_image = loadBMP("images/win.bmp");
    lose_image = loadBMP("images/over.bmp");
 }
 
-// Игровой процесс
 void play()
 {
    srand(time(NULL));
    
    while(true)
    {
-      int key; // Переменная клавиши
+      int key; 
       draw_field();
       draw_numbers();
       swapbuffers();
@@ -87,7 +74,6 @@ void play()
       if (key == 0)
          continue;
       
-      // Выход и ход назад
       if (key == KEY_ESC)
          break;
       else if (key == KEY_BACKSPACE)
@@ -96,7 +82,6 @@ void play()
          continue;
       }
       
-      // Проверка на возможность двигаться в выбранном направлении
       if (can_move(key) == true || 
          can_combine(key) == true)
       {
@@ -106,11 +91,10 @@ void play()
       else
          continue;
       
-      // Создание цифры на случайной позиции
       if (free_fields > 0)
          new_number();
       
-      if (check_lose() == true) // проигрыш
+      if (check_lose() == true) 
       {
          draw_over(lose_image);
          
@@ -125,7 +109,7 @@ void play()
          }
          break;
       }
-      else if (check_win() == true) // победа
+      else if (check_win() == true) 
       {
          draw_over(win_image);
          
@@ -142,11 +126,9 @@ void play()
             break;
       }
    }
-   // Сохранение рекорда после игры
    save_record();
 }
 
-// выделение памяти под все игровые поля
 void create_field()
 {
    Cells = new Cell*[field_size];
@@ -185,12 +167,10 @@ void create_field()
          move_pos[i][j] = 0;
    }
    
-   // Создание двух цифр в начале игры
    new_number();
    new_number();
 }
 
-// Считывание рекорда с файла
 void open_record()
 {
    string path = "records/record_" + 
@@ -203,7 +183,6 @@ void open_record()
    fin.close();
 }
 
-// Сохранение рекорда в файл
 void save_record()
 {
    string path = "records/record_" + 
@@ -214,7 +193,6 @@ void save_record()
    fout.close();
 }
 
-// Очистка памяти игры
 void delete_field() 
 {
    freeimage(win_image);
@@ -233,7 +211,6 @@ void delete_field()
    delete[] play_field;
 }
 
-// Создание цифры на случайной позиции поля
 void new_number()
 {
    int i, j;
@@ -243,14 +220,12 @@ void new_number()
    i = rand() % field_size;
    j = rand() % field_size;
    
-   // Пока случайная позиция не пустая, ищем новую
    while (play_field[i][j] != 0)
    {
       i = rand() % field_size;
       j = rand() % field_size;
    }
    
-   // Выбор цифры в зависимости от шанса
    num = rand() % chance;
    
    if (num == 0)
@@ -258,28 +233,22 @@ void new_number()
    else
       play_field[i][j] = 2;
    
-   // Обновить игрвое поле
    refresh_field();
    free_fields--;
 }
 
-// Отрисовка игрового поля
 void draw_field()
 {
-   // Фон
    putimage(0, 0, background_image, COPY_PUT);
    
-   // Текст очков и рекорда
    string score_txt = "Score: " + to_string(score);
    string record_txt = "Record: " + to_string(record);
    
-   // Настройка шрифта
    setusercharsize(6, 5, 4, 3);
    settextstyle(FONT_TEXT, HORIZ_DIR, USER_CHAR_SIZE);
    setbkcolor(imagegetpixel(background_image, 0, 0));
    setcolor(WHITE);
    
-   // Смещения позиции выводимых значений
    int score_y = 80;
    int record_y = 120;
    
@@ -287,8 +256,6 @@ void draw_field()
    outtextxy(X_OFFSET, score_y, score_txt.c_str());
    outtextxy(X_OFFSET, record_y, record_txt.c_str());
    
-   
-   // Отрисовка фона игрового поля
    setfillstyle(SOLID_FILL, COLOR(100, 100, 100));
    bar (X_OFFSET, Y_OFFSET,
       X_OFFSET + field_width + FIELD_WALL_WIDTH,
@@ -298,9 +265,8 @@ void draw_field()
    setcolor(WHITE);
    
    
-   int field_down = 150 + field_width; // нижняя точка игрового поля
+   int field_down = 150 + field_width;
    
-   // отрисока линий игрового поля
    for (int i = 0; i <= field_size; i++) 
    {
       int offset = i * field_width / field_size;
@@ -315,48 +281,39 @@ void draw_field()
    }
 }
 
-// Отрисовка клеток с цифрами игрового поля
+
 void draw_numbers()
 {
-   // Установка вывода текста по центру
    settextjustify(CENTER_TEXT, BOTTOM_TEXT);
    for (int i = 0; i < field_size; i++)
       for (int j = 0; j < field_size; j++)
-         if (Cells[i][j].data > 0) // Вывод при условии что есть цифра
+         if (Cells[i][j].data > 0)
          {
-            // Текст который необходимо вывести
             string text = to_string(Cells[i][j].data);
             int Cell_background_color = 
             COLOR(Cells[i][j].red, 
                         Cells[i][j].green, 
                         Cells[i][j].blue);
             
-            // Настройки вывода текста
             setbkcolor(Cell_background_color);
             setfillstyle(SOLID_FILL, Cell_background_color);
             
-            // Коэффицент уменьшения шрифта
             int coefficient = (text.length() + 1) * field_size;
             setusercharsize(31, coefficient + 2, 31, coefficient);
             settextstyle(FONT_TEXT, HORIZ_DIR, USER_CHAR_SIZE);
             
-            // Смещение расположения цифры
             int offset = Cells[i][j].size - FIELD_WALL_WIDTH / 2;
-            // Отрисовка фона клетки
             bar (Cells[i][j].pos_x - offset, 
                   Cells[i][j].pos_y - offset, 
                   Cells[i][j].pos_x + offset, 
                   Cells[i][j].pos_y + offset);
             
-            // Отрисовка цифры клетки
             outtextxy(Cells[i][j].pos_x, 
                Cells[i][j].pos_y + 0.5 * textheight(text.c_str()), 
                text.c_str());
          }
 }
 
-// Найти степень двойки для заданного числа
-// Функция нужна для установки цвета фона клеток
 int find_num(int n) 
 {
    if (n < 1)
@@ -371,7 +328,6 @@ int find_num(int n)
    return res;
 }
 
-// Сохранение игрового поля в переменные предыдущего хода
 void save_field()
 {
    for (int i = 0; i < field_size; i++)
@@ -382,8 +338,6 @@ void save_field()
    last_free_fields = free_fields;
 }
 
-// Ход назад
-// Присвоение значениям текущего поля, значения предыдущего хода 
 void back_step()
 {
    for (int i = 0; i < field_size; i++)
@@ -396,14 +350,9 @@ void back_step()
    refresh_field();
 }
 
-// Проверка возможности хода в выбранном направлении 
 bool can_move(int key)
-{
-   // Переменные параметров перебора матрицы 
+{ 
    int j_start, step, end;
-  
-   // При кнопках вверх и вниз перебор будет вертикальным
-   // При кнопках влево и вправо - горизонтальным
    if (key == KEY_UP || key == KEY_LEFT)
    {
       j_start = 0; 
@@ -442,15 +391,11 @@ bool can_move(int key)
             }
    }
    
-   // Если не найдена возможность сделать ход, то вернуть false
    return false;
 }
-
-// Проверка возможности соединения клеток в выбранном направлении 
+ 
 bool can_combine(int key)
 {
-   // При кнопках вверх и вниз перебор будет вертикальным
-   // При кнопках влево и вправо - горизонтальным
    if (key == KEY_UP || key == KEY_DOWN)
    {
       for (int i = 0; i < field_size; i++)
@@ -470,19 +415,12 @@ bool can_combine(int key)
    return false;
 }
 
-// Движение цифр в выбранном направлении
 void move(int key)
-{
-   // Переменные параметров перебора матрицы 
-   int j_start, end, step;
-   
-   // Количество клеток которые необходимо двигать
-   int n_moved_Cells = 0;
-
-   // Скорость движения по вертикале и горизонтале
+{ 
+   int j_start, end, step;                                         
+   int n_moved_Cells = 0;                       
    int x_speed = 0, y_speed = 0;
-   
-   // Установка параметров  в зависимости от клавиши
+                                                   
    switch (key)
    {
       case KEY_UP:
@@ -513,12 +451,6 @@ void move(int key)
    
    if (key == KEY_RIGHT || key == KEY_LEFT)
    {
-      /* Если текущая клетка ноль и проверяемая не ноль,
-         то передвигаем проверяемую клетку на текущую и 
-         перебор продолжается.
-                        
-         Если же текущая и проверяемая равны, то соединяем их
-         и заканчиваем перебор*/
       for (int i = 0; i < field_size; i++)
          for (int j = j_start; j != end; j += step)
             for (int k = j + step; k != end; k += step)
@@ -544,8 +476,8 @@ void move(int key)
                   Cells[i][k].next_x = Cells[i][j].next_x;
                   play_field[i][j] *= 2;
                   play_field[i][k] = 0;
-                  free_fields++; // Увеличиваем свободные клетки
-                  score += play_field[i][j]; // Увеличиваем очки
+                  free_fields++;                               
+                  score += play_field[i][j];                   
                   break;
                }
                else if (play_field[i][j] != 0 && 
@@ -556,8 +488,6 @@ void move(int key)
    }
    else if (key == KEY_UP || key == KEY_DOWN)
    {
-      /* Перебор по вертикале точно такой же, но
-       i и j позиции поменяны местами*/
       for (int i = 0; i < field_size; i++)
          for (int j = j_start; j != end; j += step)
             for (int k = j + step; k != end; k += step)
@@ -596,16 +526,13 @@ void move(int key)
    if (score > record)
       record = score;
    
-   // Воспроизводим анимацию
+                           
    do_animation(x_speed, y_speed, n_moved_Cells);
 }
 
-// Анимация движения клеток
+                          
 void do_animation(int x_speed, int y_speed, int n_moved_Cells)
 {
-   /* Анимация движения будет воспроизводится пока происходит
-   движение, если его не было то прерывается*/
-   
    bool moved;
    do
    {
@@ -629,22 +556,17 @@ void do_animation(int x_speed, int y_speed, int n_moved_Cells)
             moved = true;
          }
       }
-      // Отрисовываем числа после каждого движения
+                                                 
       draw_field();
       draw_numbers();
       swapbuffers();
    }
    while (moved == true);
    
-   // Обновляем поле
+                   
    refresh_field();
 }
 
-/* 
-Обновление массива структур Cells
-Приравнивание значений из playing_field в Cells
-Нужно для нормальной работы анимации
-*/
 void refresh_field()
 {
    int cell_width = field_width / field_size;
@@ -669,7 +591,6 @@ void refresh_field()
       }
 }
 
-// Проверка победы (если встречается 2048, то победа)
 bool check_win()
 {
    if (win == true)
@@ -682,7 +603,7 @@ bool check_win()
    return false;
 }
 
-// Провека проигрыша
+                   
 bool check_lose()
 {
    if (free_fields > 0)
@@ -701,10 +622,9 @@ bool check_lose()
    return true;
 }
 
-// Отрисовка окна победы или поражения
+                                     
 void draw_over(IMAGE* image)
 {
-   // Смещение окна
    int x_pos = 240, y_pos = 200;
   
    draw_field();
