@@ -5,6 +5,7 @@ All my courseworks are in this repository
 ## First Course
 
 Code editor: MinIDE
+
 Framework: "graphics.h"
 
 The goal of my first coursework was to create the game 2048
